@@ -1,6 +1,13 @@
+import sys
+from pathlib import Path
+
 import streamlit as st
-import pandas as pd
 import plotly.express as px
+
+# Ensure repo root is on PYTHONPATH so `from src...` imports work
+REPO_ROOT = Path(__file__).resolve().parents[1]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
 
 from src.sec.sec_client import SECClient
 from src.sec.ticker_map import SEC_TICKER_MAP_URL, parse_ticker_map
@@ -10,7 +17,7 @@ from src.sec.xbrl_facts import SEC_COMPANYFACTS_URL, build_kpi_table
 
 st.set_page_config(page_title="AI Earnings Engine (v0)", layout="wide")
 st.title("AI Earnings Intelligence Engine (v0)")
-st.caption("Live SEC filings + KPIs. Next: NLP + ML predictions + SHAP explanations.")
+st.caption("Live SEC filings + KPIs. Next: NLP + ML predictions + explainability.")
 
 with st.sidebar:
     email = st.text_input("Email for SEC User-Agent", "akhetuamhen@gmail.com")
@@ -20,11 +27,12 @@ with st.sidebar:
 client = SECClient(ua, throttle_s=throttle)
 
 @st.cache_data(ttl=24*3600)
-def get_ticker_df(ua_key: str):
+def get_ticker_df() -> "pd.DataFrame":
     data = client.get_json(SEC_TICKER_MAP_URL)
     return parse_ticker_map(data)
 
-tickers = get_ticker_df(ua)
+tickers = get_ticker_df()
+
 ticker = st.selectbox("Ticker", tickers["ticker"].tolist(), index=0)
 row = tickers[tickers["ticker"] == ticker].iloc[0]
 cik = int(row["cik"])
@@ -53,7 +61,7 @@ with right:
     else:
         st.dataframe(kpi.tail(12), use_container_width=True)
 
-if "Revenue" in kpi.columns and not kpi.empty:
+if not kpi.empty and "Revenue" in kpi.columns:
     st.subheader("Revenue Trend")
     fig = px.line(kpi.dropna(subset=["Revenue"]), x="end_dt", y="Revenue")
     st.plotly_chart(fig, use_container_width=True)
