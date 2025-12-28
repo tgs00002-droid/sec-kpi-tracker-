@@ -2,12 +2,10 @@ streamlit==1.37.1
 pandas==2.2.2
 requests==2.32.3
 plotly==5.23.0
-
 scikit-learn==1.5.1
 xgboost==2.1.1
 shap==0.46.0
-
 sentence-transformers==3.0.1
 faiss-cpu==1.8.0.post1
+numpy==1.26.4
 
-numpy==2.0.2
